@@ -1,4 +1,4 @@
-package com.podio.api.ship;
+package com.podio.api.client;
 
 import com.google.gson.*;
 import com.google.gson.reflect.TypeToken;
@@ -17,7 +17,7 @@ import java.util.logging.Logger;
 /**
  * This class server as a wrapper for the Podio API HTTP client requests.
  */
-public final class PodioClient {
+public final class PodioClient implements AutoCloseable {
     private static final Logger logger = Logger.getLogger(PodioClient.class.getName());
     private static final String PODIO_API_BASE_URI = "https://api.podio.com/";
     private static final String OAUTH_URI = "https://api.podio.com/oauth/token/v2";
@@ -201,9 +201,11 @@ public final class PodioClient {
         }
     }
 
+    @Override
     public void close() {
-//        todo: httpClient.close(); & auto closable
-        tokenRefreshTask.cancel(); //todo:
+
+        httpClient.close();
+        tokenRefreshTask.cancel();
         tokenRefreshTimer.cancel();
     }
 }
