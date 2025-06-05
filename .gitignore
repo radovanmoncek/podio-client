@@ -55,3 +55,5 @@ hibernate.properties
 MANIFEST.MF
 log4j2.xml
 *.json
+
+*.iml
