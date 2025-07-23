@@ -1,7 +1,7 @@
 package com.podio.api.client;
 
-import com.google.gson.*;
-import com.google.gson.reflect.TypeToken;
+//import com.google.gson.*;
+//import com.google.gson.reflect.TypeToken;
 
 import java.io.IOException;
 import java.net.URI;
@@ -15,44 +15,45 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * This class server as a wrapper for the Podio API HTTP client requests.
+ * This class serves as a wrapper for the Podio API HTTPS client requests.
  */
 public final class PodioClient implements AutoCloseable {
     private static final Logger logger = Logger.getLogger(PodioClient.class.getName());
-    private static final String PODIO_API_BASE_URI = "https://api.podio.com/";
-    private static final String OAUTH_URI = "https://api.podio.com/oauth/token/v2";
-    public static final String APP_ENDPOINT = "app/";
-    public static final String ITEM_ENDPOINT = "item/";
-    public static final String ORG_ENDPOINT = "org/";
-    public static final String SPACE_ENDPOINT = "space/";
-    public static final String USER_ENDPOINT = "user/";
-    public static final String REFERENCE_ENDPOINT = "reference/";
+    public static final String PODIO_API_BASE_URI = "https://api.podio.com/";
+    public static final String OAUTH_URI = PODIO_API_BASE_URI + "oauth/token/v2";
+    public static final String APP_ENDPOINT = PODIO_API_BASE_URI + "app/";
+    public static final String ITEM_ENDPOINT = PODIO_API_BASE_URI + "item/";
+    public static final String ORG_ENDPOINT = PODIO_API_BASE_URI + "org/";
+    public static final String SPACE_ENDPOINT = PODIO_API_BASE_URI + "space/";
+    public static final String USER_ENDPOINT = PODIO_API_BASE_URI + "user/";
+    public static final String REFERENCE_ENDPOINT = PODIO_API_BASE_URI + "reference/";
     private static PodioClient instance;
-    private final Gson gson;
+    /*private final Gson gson;
     private final HttpClient httpClient;
     private final Timer tokenRefreshTimer;
     private long callCount = 0;
     private JsonObject authenticationResponseBody;
-    private TimerTask tokenRefreshTask;
+    private TimerTask tokenRefreshTask;*/
 
     private PodioClient() {
 
-        gson = new Gson();
-        httpClient = HttpClient.newHttpClient();
-        tokenRefreshTimer = new Timer();
-        tokenRefreshTask = new TimerTask() {
-            @Override
-            public void run() {
-            }
-        };
+	/*gson = new Gson();
+	httpClient = HttpClient.newHttpClient();
+	tokenRefreshTimer = new Timer();
+	tokenRefreshTask = new TimerTask() {
+
+		@Override
+		public void run() {
+		}
+		};*/
     }
 
     public static PodioClient returnNewInstance() {
 
-        return Objects.requireNonNullElse(instance, instance = new PodioClient());
+	return Objects.requireNonNullElse(instance, instance = new PodioClient());
     }
 
-    public void login(final String clientID, final String clientSecret, final String email, final String password) throws Exception {
+    /*public void login(final String clientID, final String clientSecret, final String email, final String password) throws Exception {
 
         try {
 
@@ -200,12 +201,13 @@ public final class PodioClient implements AutoCloseable {
             return Optional.empty();
         }
     }
-
+    */
     @Override
     public void close() {
 
-        httpClient.close();
+        /*httpClient.close();
         tokenRefreshTask.cancel();
         tokenRefreshTimer.cancel();
+	*/
     }
 }
