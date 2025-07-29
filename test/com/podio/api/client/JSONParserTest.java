@@ -2,6 +2,8 @@ package com.podio.api.client;
 
 import com.podio.api.client.JSONParser;
 import java.util.Optional;
+import java.util.HashMap;
+import java.util.List;
 import static org.junit.jupiter.api.Assertions.*;
 
 import org.junit.jupiter.api.*;
@@ -111,6 +113,48 @@ public class JSONParserTest {
 
 	assertFalse(resultMap.isEmpty());
 
-	assertEquals("http://www.example.com/image/481989943", resultMap.get("Url"));
+	if (resultMap.get("\"Image\"") instanceof HashMap imageJSON) {
+
+	    if (imageJSON.get("\"Thumbnail\"") instanceof HashMap thumbnailJSON) {
+
+		if(thumbnailJSON.get("\"Url\"") instanceof String urlValue) {
+
+		    assertEquals("\"http://www.example.com/image/481989943\"", urlValue);
+		    assertEquals(125.0, thumbnailJSON.get("\"Height\""));
+		    assertEquals(100.0, thumbnailJSON.get("\"Width\""));
+		}
+	    }
+
+	    assertTrue(imageJSON.get("\"IDs\"") instanceof List);
+	    
+	    if (imageJSON.get("\"IDs\"") instanceof List iDsList) {
+
+		assertEquals(4, iDsList.size());
+		assertFalse(iDsList.isEmpty());
+		assertEquals(116, iDsList.get(0));
+		assertEquals(38793, iDsList.get(3));
+	    }
+	}
+    }
+
+    @Test
+    void rFCSpecificationArrayParseTest() {
+
+	final var result = jSONParser
+	    .parseJSONArray("[{\"precision\": \"zip\",\"Latitude\": 37.7668, \"Longitude\": -122.3959, \"Address\": \"\", \"City\": \"SAN FRANCISCO\", \"State\": \"CA\", \"Zip\": \"94107\", \"Country\": \"US\"}, {\"precision\": \"zip\", \"Latitude\": 37.371991, \"Longitude\": -122.026020, \"Address\": \"\", \"City\": \"SUNNYVALE\", \"State\": \"CA\", \"Zip\": \"94085\", \"Country\": \"US\"}]")
+	    .orElse(List.of());
+
+	assertFalse(result.isEmpty());
+
+	assertEquals(2, result.size());
+
+	assertTrue(result.get(0) instanceof HashMap);
+
+	assertEquals(37.7668, ((HashMap) result.get(0)).get("\"Latitude\""));
+	assertEquals("\"SAN FRANCISCO\"", ((HashMap) result.get(0)).get("\"City\""));
+
+	assertTrue(result.get(1) instanceof HashMap);
+
+	assertEquals(37.371991, ((HashMap) result.get(1)).get("\"Latitude\""));
     }
 }
