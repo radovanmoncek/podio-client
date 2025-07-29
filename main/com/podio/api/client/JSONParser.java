@@ -13,7 +13,7 @@ import java.util.ArrayList;
 
  Additional resources and credit:
  <a href="https://vajithc.medium.com/parsing-json-without-libraries-build-your-own-json-reader-in-java-1db8e6165039">source</a>
- */
+*/
 public final class JSONParser {
     private static final Logger logger = Logger.getLogger(JSONParser.class.getName());
     private final static Character BEGIN_ARRAY = '[';
@@ -33,120 +33,54 @@ public final class JSONParser {
 	if (jSONString.equals("{}"))
 	    return Optional.of(parsedJSON);
 
-	jSONString = jSONString.substring(1, jSONString.length() - 1/*.lastIndexOf(END_OBJECT)*/);
+	jSONString = jSONString.substring(1, jSONString.length() - 1);
 
 	if (jSONString.charAt(jSONString.length() - 1) != VALUE_SEPARATOR.charValue())
-	     jSONString = jSONString.concat(VALUE_SEPARATOR.toString());
-
-	// // final var substituted = new ArrayList<String>();
-	// // var substitutedJSONList = List.of(jSONString.splitWithDelimiters("(\".*\":)|(\".*\",)|(\".*\")", 0));
-	
-	// // logger.info(substitutedJSONList.toString());
-
-	// // var substitutedJSON = substitutedJSONList
-	// //     .stream()
-	// //     .map(entry -> {
-
-	// // 	    if(entry.startsWith("\"")) {
-
-	// // 		substituted.add(entry);
-			
-	// // 		return "%" + (substituted.size() - 1);
-	// // 	    }
-
-	// // 	    return entry;
-	// //     })
-	// // 	.reduce("{}", (partial, current) -> partial.concat(current));
+	    jSONString = jSONString.concat(VALUE_SEPARATOR.toString());
 
 	var inQuotes = false;
 	var lastValueSeparator = -1;
 
-	/*final var arrayIndices = new Stack<Integer>();
-	 final var objectIndices = new Stack<Integer>();
-	 final var tempKey = new StringBuilder(), tempValue = new StringBuilder();*/
-	
 	for (var i = 0; i < jSONString.length(); i++) {
 
-	     if(jSONString.charAt(i) == '"')
+	    if(jSONString.charAt(i) == '"')
 	 	inQuotes = !inQuotes;
 
-	     if (inQuotes)
-		 continue;
-	     
-	     /*if(jSONString.charAt(i) == BEGIN_ARRAY.charValue())
-		 arrayIndices.push(i);
-
-	     if (jSONString.charAt(i) == END_ARRAY.charValue()) {
-
-		 tempValue.delete(0, tempValue.length() - 1);
-		 
-		 tempValue.append(jSONString.substring(arrayIndices.pop(), 0));
-		 }*/
-
-	     //if (jSONString.charAt(i) == BEGIN_OBJECT.charValue()) {
-
-	     //parsedJSON.put(jSONString.substring(0, i).trim(), jSONString.substring(i, /*jSONString.lastIndexOf*/lastIndexOfIgnoreQuotes((END_OBJECT.charValue()) + 1, jSONString)).trim());
-
-		 /*i += jSONString.lastIndexOf(END_OBJECT) + 1;*/
-	     //	i = 0;
-
-	     //	jSONString = jSONString.substring(/*jSONString.lastIndexOf*/lastIndexOfIgnoreQuotes((END_OBJECT.charValue()) + 1, jSONString), jSONString.length());
-
-	     //	continue;
-	     //}
-
-	     //if (jSONString.charAt(i) == BEGIN_ARRAY.charValue()) {
-
-	     //parsedJSON.put(jSONString.substring(0, i).trim(), jSONString.substring(i, /*jSONString.*/lastIndexOfIgnoreQuotes(END_ARRAY.charValue(), jSONString) + 1).trim());
-
-		 /*i += jSONString.lastIndexOf(END_OBJECT) + 1;*/
-		 //	i = 0;
-
-		 //jSONString = jSONString.substring(/*jSONString.*/lastIndexOfIgnoreQuotes(END_ARRAY.charValue(), jSONString) + 1, jSONString.length());
-
-		 //continue;
-		 //}
+	    if (inQuotes)
+		continue;
 	     
 	    if (jSONString.charAt(i) == NAME_SEPARATOR) {
 
-		final var key = jSONString.substring(lastValueSeparator + 1, i);//.trim();
-		final var value = jSONString.substring(i + 1, lastValueSeparator = indexOfIgnoreQuotes(VALUE_SEPARATOR, jSONString.substring(i + 1, jSONString.length())) + i + 1);//.trim();
+		final var key = jSONString.substring(lastValueSeparator + 1, i);
+		final var value = jSONString.substring(i + 1, lastValueSeparator = indexOfIgnoreQuotes(VALUE_SEPARATOR, jSONString.substring(i + 1, jSONString.length())) + i + 1);
 		
 		i = lastValueSeparator;
 		
 		parsedJSON.put(key.trim(), value.trim());
-		
-		//parsedJSON.put(jSONString.substring(0, i).trim(), jSONString.substring(i + 1, /*jSONString.*/indexOfIgnoreQuotes(VALUE_SEPARATOR, jSONString)).trim());
-
-		//jSONString = jSONString.substring(Math.min(/*jSONString.*/indexOfIgnoreQuotes(VALUE_SEPARATOR, jSONString) + 1, jSONString.length() - 1), jSONString.length());
-
-		/*i -= jSONString.indexOf(VALUE_SEPARATOR) + 1;*/
-		//i = 0;
 	    }
 	}
 
 	parsedJSON.forEach((key, value) -> {
 
-		 if (value instanceof String stringValue) {
+		if (value instanceof String stringValue) {
 
-		     final var firstCh = stringValue.charAt(0);
+		    final var firstCh = stringValue.charAt(0);
 		     
-		     if(firstCh == BEGIN_ARRAY)
-			 parsedJSON.replace(key, parseJSONArray(stringValue).orElse(new ArrayList<>()));
+		    if(firstCh == BEGIN_ARRAY)
+			parsedJSON.replace(key, parseJSONArray(stringValue).orElse(new ArrayList<>()));
 		     
-		     if (firstCh == BEGIN_OBJECT)
-			 parsedJSON.replace(key, parseJSON(stringValue).orElse(new HashMap<>()));
+		    if (firstCh == BEGIN_OBJECT)
+			parsedJSON.replace(key, parseJSON(stringValue).orElse(new HashMap<>()));
 
-		     try {
-
-			 //parsedJSON.replace(key, Integer.parseInt(stringValue));
-			 parsedJSON.replace(key, Double.parseDouble(stringValue));
-		     }
-		     catch (final Exception ignored) {}
-		 }
-	     });
+		    try {
+			 
+			parsedJSON.replace(key, Double.parseDouble(stringValue));
+		    }
+		    catch (final Exception ignored) {}
+		}
+	    });
 	
-	     return Optional.of(parsedJSON);
+	return Optional.of(parsedJSON);
     }
 
     /**
@@ -162,13 +96,10 @@ public final class JSONParser {
 	if (jSONString.equals("[]"))
 	    return Optional.of(parsedJSON);
 	
-	//jSONString = jSONString.replace(" ", "");
 	jSONString = jSONString.substring(1, jSONString.length() - 1);
 
 	if (jSONString.charAt(jSONString.length() - 1) != VALUE_SEPARATOR)
 	    jSONString = jSONString.concat(VALUE_SEPARATOR.toString());
-	
-	//var tempValue = "";
 
 	var lastValueSep = -1;
 	var skip = false;
@@ -203,23 +134,6 @@ public final class JSONParser {
 		
 		i = lastValueSep;
 	    }
-	    
-	    //switch (jSONString.charAt(i)) {
-
-		/*case VALUE_SEPARATOR -> {
-
-		parsedJSON.add(tempValue);
-		tempValue = "";
-		}*/
-	    
-	    //default -> {
-		    
-	    //tempValue = tempValue.concat(jSONString.substring(i, i + 1));
-
-	    //if (i == jSONString.length() - 1)
-	    //parsedJSON.add(tempValue);
-	    //}
-	    //}
 	}
 	
 	return Optional.of(parsedJSON
@@ -248,8 +162,6 @@ public final class JSONParser {
 			       })
 			   .toList()
 			   );
-	
-	//return Optional.of(parsedJSON);
     }
     
     /**
@@ -306,7 +218,7 @@ public final class JSONParser {
 
 	    if (curCh == BEGIN_ARRAY) {
 
-		i = /*Math.max(*/lastIndexOfIgnoreQuotes(END_ARRAY, s)/*, i)*/;
+		i = lastIndexOfIgnoreQuotes(END_ARRAY, s);
 	    }
 	    
 	    if (curCh == ch){

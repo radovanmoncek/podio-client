@@ -54,7 +54,7 @@ public class JSONParserTest {
     void valueSeparatorJSONObjectTest() {
 	
 	final var result = jSONParser.parseJSON(
-					       "{\"test1\": \"value1\", \"test2\": \"value2\",}"
+						"{\"test1\": \"value1\", \"test2\": \"value2\",}"
 						);
 
 	assertTrue(result.isPresent());
