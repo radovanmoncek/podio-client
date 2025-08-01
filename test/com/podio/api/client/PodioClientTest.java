@@ -13,13 +13,13 @@ public class PodioClientTest {
     @BeforeAll
     static void setup(){
 
-        podioClient = PodioClient.returnNewInstance();
+        podioClient = PodioClient.returnInstance();
     }
 
     @Test
     void singletonTest(){
 
-	assertEquals(podioClient, PodioClient.returnNewInstance());
+	assertEquals(podioClient, PodioClient.returnInstance());
     }
 
     @AfterAll

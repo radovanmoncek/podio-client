@@ -28,59 +28,105 @@ public final class PodioClient implements AutoCloseable {
     public static final String USER_ENDPOINT = PODIO_API_BASE_URI + "user/";
     public static final String REFERENCE_ENDPOINT = PODIO_API_BASE_URI + "reference/";
     private static PodioClient instance;
-    /*private final Gson gson;
+    private final JSONParser jSONParser;
+    //private final Gson gson;
     private final HttpClient httpClient;
     private final Timer tokenRefreshTimer;
     private long callCount = 0;
-    private JsonObject authenticationResponseBody;
-    private TimerTask tokenRefreshTask;*/
+    //private JsonObject authenticationResponseBody;
+    private Map<String, Object> authenticationResponseBody;
+    private TimerTask tokenRefreshTask;
 
     private PodioClient() {
 
-	/*gson = new Gson();
-	httpClient = HttpClient.newHttpClient();
-	tokenRefreshTimer = new Timer();
-	tokenRefreshTask = new TimerTask() {
+	jSONParser = new JSONParser();
+	// // gson = new Gson();
+     	httpClient = HttpClient.newHttpClient();
+     	tokenRefreshTimer = new Timer();
+     	tokenRefreshTask = new TimerTask() {
 
-		@Override
-		public void run() {
-		}
-		};*/
-    }
+     		@Override
+     		public void run() {
+     		}
+     		};
+     }
 
-    public static PodioClient returnNewInstance() {
+     public static PodioClient returnInstance() {
 
-	return Objects.requireNonNullElse(instance, instance = new PodioClient());
-    }
+     	return Objects.requireNonNullElse(instance, instance = new PodioClient());
+     }
 
-    /*public void login(final String clientID, final String clientSecret, final String email, final String password) throws Exception {
+     public void login(final String clientID, final String clientSecret, final String email, final String password) throws Exception {
 
-        try {
+         try {
 
-            final var loginRequestBody = new JsonObject();
+            // final var loginRequestBody = new JsonObject();
+	     final var loginRequestBody = new StringBuilder();
 
-            loginRequestBody.addProperty("grant_type", "password");
-            loginRequestBody.addProperty("username", email);
-            loginRequestBody.addProperty("password", password);
-            loginRequestBody.addProperty("client_id", clientID);
-            loginRequestBody.addProperty("redirect_uri", "");
-            loginRequestBody.addProperty("client_secret", clientSecret);
+	     //loginRequestBody.addProperty("grant_type", "password");
+	     //loginRequestBody.addProperty("username", email);
+	     //loginRequestBody.addProperty("password", password);
+	     //loginRequestBody.addProperty("client_id", clientID);
+	     //loginRequestBody.addProperty("redirect_uri", "");
+	     //loginRequestBody.addProperty("client_secret", clientSecret);
 
+	     loginRequestBody
+		 .append("{")
+		 .append("grant_type")
+		 .append(":")
+		 .append("password")
+		 .append(",")
+		 .append("username")
+		 .append(":")
+		 .append(email)
+		 .append("password")
+		 .append(":")
+		 .append(password)
+		 .append("client_id")
+		 .append(":")
+		 .append(clientID)
+		 .append(",")
+		 .append("redirect_uri")
+		 .append(":")
+		 .append("")
+		 .append(",")
+		 .append("client_secret")
+		 .append(":")
+		 .append(clientSecret)
+		 .append("}");
+	     
             final var loginPOSTRequest = HttpRequest
                     .newBuilder()
                     .uri(new URI(OAUTH_URI))
                     .header("Content-Type", "application/json")
-                    .POST(HttpRequest.BodyPublishers.ofString(loginRequestBody.toString()))
+                    .POST(HttpRequest
+			  .BodyPublishers
+			  .ofString(loginRequestBody.toString())
+			  )
                     .build();
 
             logger.info(loginPOSTRequest.toString());
 
-            final var loginPOSTResponse = httpClient.send(loginPOSTRequest, HttpResponse.BodyHandlers.ofString());
+            final var loginPOSTResponse = httpClient.send(loginPOSTRequest,
+							  HttpResponse
+							  .BodyHandlers
+							  .ofString()
+							  );
 
-            if (loginPOSTResponse.statusCode() >= 400)
-                throw new Exception("Podio API authentication failed");
+            if (loginPOSTResponse.statusCode() >= 400) {
 
-            authenticationResponseBody = gson.fromJson(loginPOSTResponse.body(), JsonObject.class);
+		final var e = new Exception("Podio API authentication failed");
+		
+		logger.throwing(loginPOSTResponse.toString(), "login", e);
+		
+                throw e;
+	    }
+
+            //authenticationResponseBody = gson.fromJson(loginPOSTResponse.body(), JsonObject.class);
+
+	    authenticationResponseBody = jSONParser
+		.parseJSON(loginPOSTResponse.body())
+		.orElse(new HashMap<>());
 
             logger.info(authenticationResponseBody.toString());
 
@@ -90,51 +136,76 @@ public final class PodioClient implements AutoCloseable {
 
                             try {
 
-                                final var refreshTokenRequest = new JsonObject();
+                                //final var refreshTokenRequest = new JsonObject();
+                                final var refreshTokenRequest = new StringBuilder()
+				    .append("{")
+				    .append("grant_type")
+				    .append(":")
+				    .append("refresh_token")
+				    .append(",")
+				    .append("refresh_token")
+				    .append(":")
+				    .append(authenticationResponseBody.get("\"refresh_token\""))
+				    .append(",")
+				    .append("client_id")
+				    .append(":")
+				    .append(clientID)
+				    .append(",")
+				    .append("client_secret")
+				    .append(":")
+				    .append(clientSecret)
+				    .append("}");
 
-                                refreshTokenRequest.addProperty("grant_type", "refresh_token");
-                                refreshTokenRequest.addProperty("refresh_token", authenticationResponseBody.get("refresh_token").toString());
-                                refreshTokenRequest.addProperty("client_id", clientID);
-                                refreshTokenRequest.addProperty("client_secret", clientSecret);
+                                //refreshTokenRequest.addProperty("grant_type", "refresh_token");
+                                //refreshTokenRequest.addProperty("refresh_token", authenticationResponseBody.get("refresh_token").toString());
+                                //refreshTokenRequest.addProperty("client_id", clientID);
+                                //refreshTokenRequest.addProperty("client_secret", clientSecret);
 
                                 final var loginPOSTRefreshTokenRequest = HttpRequest
                                         .newBuilder()
                                         .uri(new URI(OAUTH_URI))
                                         .header("Content-Type", "application/json")
-                                        .POST(HttpRequest.BodyPublishers.ofString(refreshTokenRequest.getAsString()))
+				    .POST(HttpRequest
+					  .BodyPublishers
+					  .ofString(refreshTokenRequest.toString()/*.getAsString()*/))
                                         .build();
 
-                                httpClient.send(loginPOSTRefreshTokenRequest, HttpResponse.BodyHandlers.ofString());
+                                httpClient.send(loginPOSTRefreshTokenRequest,
+						HttpResponse
+						.BodyHandlers
+						.ofString()
+						);
                             } catch (URISyntaxException | InterruptedException | IOException e) {
 
                                 logger.throwing(getClass().getName(), "login", e);
                             }
                         }
                     },
-                    authenticationResponseBody
-                            .get("expires_in")
-                            .getAsLong() * 1000
-            );
+		(int) (authenticationResponseBody.get("\"expires_in\"")/*.getAsLong()*/ * 1000)
+		);
         } catch (URISyntaxException | IOException | InterruptedException e) {
-            logger.throwing(getClass().getName(), "login", e);
+
+	     logger.throwing(getClass().getName(), "login", e);
         }
     }
 
-    public <T> Optional<T> GET(final String request, final TypeToken<T> responseType) {
+    public /*<T>*/ Optional</*T*/Map<String, Object>> sendGET(final String endpoint/*final String request, final TypeToken<T> responseType*/) {
 
         try {
 
-            logger.log(Level.INFO, "{0} GET", PODIO_API_BASE_URI + request);
+            logger.log(Level.INFO, "{0} GET", /*PODIO_API_BASE_URI + request*/ endpoint);
 
             final var httpResponse = httpClient
                     .send(
                             HttpRequest
                                     .newBuilder()
-                                    .uri(new URI(PODIO_API_BASE_URI + request))
-                                    .header("Authorization", "OAuth2 " + authenticationResponseBody.get("access_token").getAsString())
+			    .uri(new URI(/*PODIO_API_BASE_URI + request*/endpoint))
+			    .header("Authorization", "OAuth2 " + authenticationResponseBody.get("\"access_token\"")/*.getAsString()*/)
                                     .GET()
-                                    .build()
-                            , HttpResponse.BodyHandlers.ofString()
+                                    .build(),
+			    HttpResponse
+			    .BodyHandlers
+			    .ofString()
                     );
 
             logger.log(Level.FINEST, "Current call count: {0}", ++callCount);
@@ -151,32 +222,37 @@ public final class PodioClient implements AutoCloseable {
 
             TimeUnit.MILLISECONDS.sleep(500);
 
-            final var deserializedResponse = gson.fromJson(httpResponse.body(), responseType);
+            //final var deserializedResponse = gson.fromJson(httpResponse.body(), responseType);
 
-            return Optional.of(deserializedResponse);
+            return /*Optional.of(deserializedResponse*/jSONParser.parseJSON(httpResponse.body());
         } catch (IOException | InterruptedException | URISyntaxException e) {
-            logger.throwing(getClass().getName(), "GET", e);
+
+	    logger.throwing(getClass().getName(), "GET", e);
 
             return Optional.empty();
         }
     }
 
-    private static String filterComma(String string) {//TODO: String sanitizer method (general filter of html tags etc.)
+    public /*<T>*/ Optional</*T*/Map<String, Object>> sendPOST(final String endpoint, final String body/*final String request, final JsonObject body, final TypeToken<T> returnType*/) {
 
-        return string.replace(",", " ");
-    }
+	try {
 
-    public <T> Optional<T> POST(final String request, final JsonObject body, final TypeToken<T> returnType) {
-        try {
-            logger.log(Level.INFO, "{0} POST", PODIO_API_BASE_URI + request);
+	    logger.log(Level.INFO, "{0} POST", /*PODIO_API_BASE_URI + request*/endpoint);
 
             final var httpResponse = httpClient.send(HttpRequest
                     .newBuilder()
-                    .uri(URI.create(PODIO_API_BASE_URI + request))
-                    .header("Authorization", "OAuth2 " + authenticationResponseBody.get("access_token").getAsString())
+						     .uri(URI.create(/*PODIO_API_BASE_URI + request*/endpoint))
+						     .header("Authorization", "OAuth2 " + authenticationResponseBody.get("\"access_token\"")/*.getAsString()*/)
                     .header("Content-Type", "application/json")
-                    .POST(HttpRequest.BodyPublishers.ofString(gson.toJson(body)))
-                    .build(), HttpResponse.BodyHandlers.ofString());
+                    .POST(HttpRequest
+			  .BodyPublishers
+			  .ofString(/*gson.toJson(*/body/*)*/)
+			  )
+                    .build(),
+						     HttpResponse
+						     .BodyHandlers
+						     .ofString()
+						     );
 
             logger.log(Level.FINEST, "Current call count: {0}", ++callCount);
 
@@ -191,9 +267,9 @@ public final class PodioClient implements AutoCloseable {
 
             TimeUnit.MILLISECONDS.sleep(500);
 
-            final var deserializedResponse = gson.fromJson(httpResponse.body(), returnType);
+            //final var deserializedResponse = gson.fromJson(httpResponse.body(), returnType);
 
-            return Optional.of(deserializedResponse);
+            return /*Optional.of(deserializedResponse*/jSONParser.parseJSON(httpResponse.body());
         } catch (IOException | InterruptedException e) {
 
             logger.throwing(getClass().getName(), "POST", e);
@@ -201,13 +277,12 @@ public final class PodioClient implements AutoCloseable {
             return Optional.empty();
         }
     }
-    */
+    
     @Override
     public void close() {
 
-        /*httpClient.close();
+        httpClient.close();
         tokenRefreshTask.cancel();
         tokenRefreshTimer.cancel();
-	*/
     }
 }
