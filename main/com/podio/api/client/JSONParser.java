@@ -9,10 +9,10 @@ import java.util.LinkedList;
 import java.util.ArrayList;
 
 /**
- * Parses JSON objects as specified by <a href="https://www.rfc-editor.org/rfc/pdfrfc/rfc8259.txt.pdf">The JavaScript Object Notation (JSON) Data Interchange Format</a>
-
+ * Parses JSON objects as specified by <a href="https://www.rfc-editor.org/rfc/pdfrfc/rfc8259.txt.pdf">The JavaScript Object Notation (JSON) Data Interchange Format</a>.
+ * Implementation is done by linear search and "modally" skipping "offending" passages. This means linear worst case complexity, formally written as O(n) todo (recursion, quadratic "to an extent").
  Additional resources and credit:
- <a href="https://vajithc.medium.com/parsing-json-without-libraries-build-your-own-json-reader-in-java-1db8e6165039">source</a>
+ <a href="https://vajithc.medium.com/parsing-json-without-libraries-build-your-own-json-reader-in-java-1db8e6165039">source</a>.
 */
 public final class JSONParser {
     private static final Logger logger = Logger.getLogger(JSONParser.class.getName());
@@ -23,15 +23,15 @@ public final class JSONParser {
     private final static Character NAME_SEPARATOR = ':';
     private final static Character VALUE_SEPARATOR = ',';
 
-    Optional<Map<String, Object>> parseJSON(String jSONString) {
+    List<Object> parseJSON(String jSONString) {
 
 	final HashMap<String, Object> parsedJSON = new HashMap<>();
 
 	if (jSONString.charAt(0) != BEGIN_OBJECT || jSONString.charAt(jSONString.length() - 1) != END_OBJECT)
-	    return Optional.empty();
+	    return List.of();
 
 	if (jSONString.equals("{}"))
-	    return Optional.of(parsedJSON);
+	    return List.of(parsedJSON);
 
 	jSONString = jSONString.substring(1, jSONString.length() - 1);
 
@@ -65,37 +65,37 @@ public final class JSONParser {
 		if (value instanceof String stringValue) {
 
 		    final var firstCh = stringValue.charAt(0);
-		     
+
 		    if(firstCh == BEGIN_ARRAY)
-			parsedJSON.replace(key, parseJSONArray(stringValue).orElse(new ArrayList<>()));
-		     
+			parsedJSON.replace(key, parseJSONArray(stringValue));
+
 		    if (firstCh == BEGIN_OBJECT)
-			parsedJSON.replace(key, parseJSON(stringValue).orElse(new HashMap<>()));
+			parsedJSON.replace(key, parseJSON(stringValue).getFirst());
 
 		    try {
-			 
+
 			parsedJSON.replace(key, Double.parseDouble(stringValue));
 		    }
 		    catch (final Exception ignored) {}
 		}
 	    });
 	
-	return Optional.of(parsedJSON);
+	return List.of(parsedJSON);
     }
 
     /**
      * Algorithm taken partially from: https://vajithc.medium.com/parsing-json-without-libraries-build-your-own-json-reader-in-java-1db8e6165039
      */
-    Optional<List<Object>> parseJSONArray(String jSONString) {
+    List<Object> parseJSONArray(String jSONString) {
 
         final var parsedJSON = new LinkedList<Object>();
 
 	if (jSONString.charAt(0) != BEGIN_ARRAY || jSONString.charAt(jSONString.length() - 1) != END_ARRAY)
-	    return Optional.empty();
+	    return List.of();
 
 	if (jSONString.equals("[]"))
-	    return Optional.of(parsedJSON);
-	
+	    return List.of(/*parsedJSON*/);
+
 	jSONString = jSONString.substring(1, jSONString.length() - 1);
 
 	if (jSONString.charAt(jSONString.length() - 1) != VALUE_SEPARATOR)
@@ -136,7 +136,7 @@ public final class JSONParser {
 	    }
 	}
 	
-	return Optional.of(parsedJSON
+	return /*List.of(*/parsedJSON
 			   .stream()
 			   .map(value -> {
 
@@ -154,20 +154,20 @@ public final class JSONParser {
 
 				   if (((String) value).charAt(0) == BEGIN_OBJECT) {
 
-				       return parseJSON((String) value).orElse(new HashMap());
+				       return parseJSON((String) value).getFirst();
 				   }
 		    
 				   return value;
 
 			       })
 			   .toList()
-			   );
+	    /*)*/;
     }
     
     /**
      * Algorithm taken partially from: https://vajithc.medium.com/parsing-json-without-libraries-build-your-own-json-reader-in-java-1db8e6165039
      */
-    public int lastIndexOfIgnoreQuotes(int ch, String s) {
+    /*public int lastIndexOfIgnoreQuotes(int ch, String s) {
 
 	var skip = false;
 	var index = -1;
@@ -191,15 +191,17 @@ public final class JSONParser {
 	}
 
 	return index;
-    }
+	}*/
 
     /**
-     * Algorithm taken partially from: https://vajithc.medium.com/parsing-json-without-libraries-build-your-own-json-reader-in-java-1db8e6165039
+     * Algorithm taken partially from: <a href="https://vajithc.medium.com/parsing-json-without-libraries-build-your-own-json-reader-in-java-1db8e6165039">source</a>
      */
     public int indexOfIgnoreQuotes(int ch, String s) {
 	
 	var skip = false;
 	var index = -1;
+	var oO = 0;
+	var oA = 0;
 
 	for (var i = 0; i < s.length(); i++) {
 
@@ -213,13 +215,24 @@ public final class JSONParser {
 
 	    if (curCh == BEGIN_OBJECT) {
 
-		i = lastIndexOfIgnoreQuotes(END_OBJECT, s);
+		/*i = lastIndexOfIgnoreQuotes(END_OBJECT, s);*/
+		oO++;
 	    }
+
+	    if (curCh == END_OBJECT)
+		oO--;
 
 	    if (curCh == BEGIN_ARRAY) {
 
-		i = lastIndexOfIgnoreQuotes(END_ARRAY, s);
+		/*i = lastIndexOfIgnoreQuotes(END_ARRAY, s);*/
+		oA++;
 	    }
+
+	    if (curCh == END_ARRAY)
+		oA--;
+
+	    if (oO != 0 || oA != 0)
+		continue;
 	    
 	    if (curCh == ch){
 

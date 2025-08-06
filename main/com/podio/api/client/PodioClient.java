@@ -35,53 +35,55 @@ public final class PodioClient implements AutoCloseable {
     private PodioClient() {
 
 	jSONParser = new JSONParser();
-     	httpClient = HttpClient.newHttpClient();
-     	tokenRefreshTimer = new Timer();
-     	tokenRefreshTask = new TimerTask() {
-
-     		@Override
-     		public void run() {
-     		}
-	    };
+	httpClient = HttpClient.newHttpClient();
+	tokenRefreshTimer = new Timer();
     }
 
     public static PodioClient returnInstance() {
 
-     	return Objects.requireNonNullElse(instance, instance = new PodioClient());
+	return Objects.requireNonNullElse(instance, instance = new PodioClient());
     }
 
-    public void login(final String clientID, final String clientSecret, final String email, final String password) throws Exception {
+    public void login(final Map<String, String> creds) throws Exception {
 
 	try {
 
-	    final var loginRequestBody = new StringBuilder();
-
-	    loginRequestBody
+	    final var loginRequestBody = new StringBuilder()
 		.append("{")
-		.append("grant_type")
+		.append("\"grant_type\"")
 		.append(":")
-		.append("password")
+		.append("\"password\"")
 		.append(",")
-		.append("username")
+		.append("\"username\"")
 		.append(":")
-		.append(email)
-		.append("password")
-		.append(":")
-		.append(password)
-		.append("client_id")
-		.append(":")
-		.append(clientID)
+		.append("\"")
+		.append(creds.get("email"))
+		.append("\"")
 		.append(",")
-		.append("redirect_uri")
+		.append("\"password\"")
 		.append(":")
-		.append("")
+		.append("\"")
+		.append(creds.get("password"))
+		.append("\"")
 		.append(",")
-		.append("client_secret")
+		.append("\"client_id\"")
 		.append(":")
-		.append(clientSecret)
+		.append("\"")
+		.append(creds.get("clientID"))
+		.append("\"")
+		.append(",")
+		.append("\"redirect_uri\"")
+		.append(":")
+		.append("\"\"")
+		.append(",")
+		.append("\"client_secret\"")
+		.append(":")
+		.append("\"")
+		.append(creds.get("clientSecret"))
+		.append("\"")
 		.append("}");
-	     
-            final var loginPOSTRequest = HttpRequest
+
+	    final var loginPOSTRequest = HttpRequest
 		.newBuilder()
 		.uri(new URI(OAUTH_URI))
 		.header("Content-Type", "application/json")
@@ -91,52 +93,57 @@ public final class PodioClient implements AutoCloseable {
 		      )
 		.build();
 
-            logger.info(loginPOSTRequest.toString());
+	    logger.info(loginPOSTRequest.toString());
+	    logger.info(loginRequestBody.toString());
 
-            final var loginPOSTResponse = httpClient.send(loginPOSTRequest,
+	    final var loginPOSTResponse = httpClient.send(loginPOSTRequest,
 							  HttpResponse
 							  .BodyHandlers
 							  .ofString()
 							  );
 
-            if (loginPOSTResponse.statusCode() >= 400) {
+	    if (loginPOSTResponse.statusCode() >= 400) {
 
 		final var e = new Exception("Podio API authentication failed");
-		
+
 		logger.throwing(loginPOSTResponse.toString(), "login", e);
-		
-                throw e;
+
+		throw e;
 	    }
 
-	    authenticationResponseBody = jSONParser
+	    authenticationResponseBody = (Map) jSONParser
 		.parseJSON(loginPOSTResponse.body())
-		.orElse(new HashMap<>());
+		.getFirst();
 
-            logger.info(authenticationResponseBody.toString());
+	    logger.info(authenticationResponseBody.toString());
 
-            tokenRefreshTimer.schedule(tokenRefreshTask = new TimerTask() {
+	    tokenRefreshTimer.schedule(tokenRefreshTask = new TimerTask() {
 
 		    public void run() {
 
 			try {
-				
+
 			    final var refreshTokenRequest = new StringBuilder()
 				.append("{")
-				.append("grant_type")
+				.append("\"grant_type\"")
 				.append(":")
-				.append("refresh_token")
+				.append("\"refresh_token\"")
 				.append(",")
-				.append("refresh_token")
+				.append("\"refresh_token\"")
 				.append(":")
-				.append(authenticationResponseBody.get("\"refresh_token\""))
+				.append("\"")
+				.append((String) authenticationResponseBody.get("\"refresh_token\""))
+				.append("\"")
 				.append(",")
-				.append("client_id")
+				.append("\"client_id\"")
 				.append(":")
-				.append(clientID)
+				.append("\"")
+				.append(creds.get("clientID"))
+				.append("\"")
 				.append(",")
-				.append("client_secret")
+				.append("\"client_secret\"")
 				.append(":")
-				.append(clientSecret)
+				.append(creds.get("clientSecret"))
 				.append("}");
 
 			    final var loginPOSTRefreshTokenRequest = HttpRequest
@@ -153,13 +160,15 @@ public final class PodioClient implements AutoCloseable {
 					    .BodyHandlers
 					    .ofString()
 					    );
+
+			    logger.info(loginRequestBody.toString());
 			} catch (URISyntaxException | InterruptedException | IOException e) {
 
 			    logger.throwing(getClass().getName(), "login", e);
 			}
 		    }
 		},
-		(int) (authenticationResponseBody.get("\"expires_in\"") * 1000)
+		(int) ((Double) authenticationResponseBody.get("\"expires_in\"") * 1000)
 		);
         } catch (URISyntaxException | IOException | InterruptedException e) {
 
@@ -167,7 +176,7 @@ public final class PodioClient implements AutoCloseable {
         }
     }
 
-    public Optional<Map<String, Object>> sendGET(final String endpoint) {
+    public List<Object> sendGET(final String endpoint) {
 
         try {
 
@@ -178,7 +187,7 @@ public final class PodioClient implements AutoCloseable {
 		      HttpRequest
 		      .newBuilder()
 		      .uri(new URI(endpoint))
-		      .header("Authorization", "OAuth2 " + authenticationResponseBody.get("\"access_token\""))
+		      .header("Authorization", "OAuth2 " + trimQuotes((String) authenticationResponseBody.get("\"access_token\"")))
 		      .GET()
 		      .build(),
 		      HttpResponse
@@ -191,25 +200,33 @@ public final class PodioClient implements AutoCloseable {
             if (httpResponse.statusCode() >= 400) {
 
                 logger.log(Level.SEVERE, "Response code above 400 {0}", httpResponse);
+                logger.severe(httpResponse.body());
 
                 if (httpResponse.statusCode() == 420)
                     logger.severe("Rate limit reached");
 
-                return Optional.empty();
+                return List.of();
             }
 
+	    logger.info(httpResponse.body());
+	    
             TimeUnit.MILLISECONDS.sleep(500);
 
-            return jSONParser.parseJSON(httpResponse.body());
+            final var res = jSONParser.parseJSON(httpResponse.body());
+
+	    if (!res.isEmpty())
+		return res;
+
+	    return jSONParser.parseJSONArray(httpResponse.body());
         } catch (IOException | InterruptedException | URISyntaxException e) {
 
 	    logger.throwing(getClass().getName(), "GET", e);
 
-            return Optional.empty();
+            return List.of();
         }
     }
 
-    public Optional<Map<String, Object>> sendPOST(final String endpoint, final String body) {
+    public List<Object> sendPOST(final String endpoint, final String body) {
 
 	try {
 
@@ -238,25 +255,39 @@ public final class PodioClient implements AutoCloseable {
                 if (httpResponse.statusCode() == 420)
                     logger.severe("Rate limit reached");
 
-                return Optional.empty();
+                return List.of();
             }
 
             TimeUnit.MILLISECONDS.sleep(500);
 
-            return jSONParser.parseJSON(httpResponse.body());
+            final var res = jSONParser.parseJSON(httpResponse.body());
+
+	    if (!res.isEmpty())
+		return res;
+
+	    return jSONParser.parseJSONArray(httpResponse.body());
         } catch (IOException | InterruptedException e) {
 
             logger.throwing(getClass().getName(), "POST", e);
 
-            return Optional.empty();
+            return List.of();
         }
     }
-    
+
     @Override
     public void close() {
 
-        httpClient.close();
-        tokenRefreshTask.cancel();
-        tokenRefreshTimer.cancel();
+	httpClient.close();
+
+	if(tokenRefreshTask == null)
+	    return;
+
+	tokenRefreshTask.cancel();
+	tokenRefreshTimer.cancel();
+    }
+
+    private String trimQuotes(final String s) {
+
+	return s.substring(1, s.length() - 1);
     }
 }
