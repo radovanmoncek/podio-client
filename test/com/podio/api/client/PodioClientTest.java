@@ -12,22 +12,15 @@ public class PodioClientTest {
     @BeforeAll
     static void setup(){
 
-	final var consoleHandler = new ConsoleHandler();
-
-	consoleHandler.setLevel(Level.ALL);
-
 	final var log = Logger.getLogger(PodioClient.class.getName());
 
 	log.setLevel(Level.ALL);
-	log.addHandler(consoleHandler);
-	
-        podioClient = PodioClient.returnInstance();
-    }
+	log
+	    .getParent()
+	    .getHandlers()[0]
+	    .setLevel(Level.ALL);
 
-    @Test
-    void singletonTest(){
-
-	assertEquals(podioClient, PodioClient.returnInstance());
+	podioClient = new PodioClient();
     }
 
     @Test
@@ -37,7 +30,7 @@ public class PodioClientTest {
 
 	creds.put("email", "testMail");
 	creds.put("password", "testPass");
-	
+
 	assertThrows(Exception.class, () -> podioClient.login(creds));
     }
 

@@ -15,13 +15,13 @@ import java.util.ArrayList;
  <a href="https://vajithc.medium.com/parsing-json-without-libraries-build-your-own-json-reader-in-java-1db8e6165039">source</a>.
 */
 public final class JSONParser {
-    private static final Logger logger = Logger.getLogger(JSONParser.class.getName());
-    private final static Character BEGIN_ARRAY = '[';
-    private final static Character BEGIN_OBJECT = '{';
-    private final static Character END_ARRAY = ']';
-    private final static Character END_OBJECT = '}';
-    private final static Character NAME_SEPARATOR = ':';
-    private final static Character VALUE_SEPARATOR = ',';
+    private final Logger logger = Logger.getLogger(JSONParser.class.getName());
+    private final Character BEGIN_ARRAY = '[';
+    private final Character BEGIN_OBJECT = '{';
+    private final Character END_ARRAY = ']';
+    private final Character END_OBJECT = '}';
+    private final Character NAME_SEPARATOR = ':';
+    private final Character VALUE_SEPARATOR = ',';
 
     List<Object> parseJSON(String jSONString) {
 
@@ -48,14 +48,14 @@ public final class JSONParser {
 
 	    if (inQuotes)
 		continue;
-	     
+
 	    if (jSONString.charAt(i) == NAME_SEPARATOR) {
 
 		final var key = jSONString.substring(lastValueSeparator + 1, i);
 		final var value = jSONString.substring(i + 1, lastValueSeparator = indexOfIgnoreQuotes(VALUE_SEPARATOR, jSONString.substring(i + 1, jSONString.length())) + i + 1);
-		
+
 		i = lastValueSeparator;
-		
+
 		parsedJSON.put(key.trim(), value.trim());
 	    }
 	}
@@ -74,12 +74,20 @@ public final class JSONParser {
 
 		    try {
 
+			parsedJSON.replace(key, Long.parseLong(stringValue));
+
+			return;
+		    }
+		    catch (final Exception ignored) {}
+
+		    try {
+
 			parsedJSON.replace(key, Double.parseDouble(stringValue));
 		    }
 		    catch (final Exception ignored) {}
 		}
 	    });
-	
+
 	return List.of(parsedJSON);
     }
 
@@ -88,13 +96,13 @@ public final class JSONParser {
      */
     List<Object> parseJSONArray(String jSONString) {
 
-        final var parsedJSON = new LinkedList<Object>();
+	final var parsedJSON = new LinkedList<Object>();
 
 	if (jSONString.charAt(0) != BEGIN_ARRAY || jSONString.charAt(jSONString.length() - 1) != END_ARRAY)
 	    return List.of();
 
 	if (jSONString.equals("[]"))
-	    return List.of(/*parsedJSON*/);
+	    return List.of();
 
 	jSONString = jSONString.substring(1, jSONString.length() - 1);
 
@@ -105,7 +113,7 @@ public final class JSONParser {
 	var skip = false;
 	var objectConsumerCount = 0;
 	var arrayConsumerCount = 0;
-	
+
 	for(var i = 0; i < jSONString.length(); i++) {
 
 	    final var curCh = jSONString.charAt(i);
@@ -124,25 +132,25 @@ public final class JSONParser {
 
 	    if (curCh == END_ARRAY)
 		arrayConsumerCount--;
-	    
+
 	    if (skip || objectConsumerCount != 0 || arrayConsumerCount != 0)
 		continue;
-	    
+
 	    if (curCh == VALUE_SEPARATOR) {
 
 		parsedJSON.add(jSONString.substring(lastValueSep + 1, lastValueSep = indexOfIgnoreQuotes(VALUE_SEPARATOR, jSONString.substring(i, jSONString.length())) + i).trim());
-		
+
 		i = lastValueSep;
 	    }
 	}
-	
-	return /*List.of(*/parsedJSON
+
+	return parsedJSON
 			   .stream()
 			   .map(value -> {
 
 				   try {
 
-				       return Integer.parseInt((String) value);
+				       return Long.parseLong((String) value);
 				   }
 				   catch (Exception ignored) {}
 
@@ -156,48 +164,18 @@ public final class JSONParser {
 
 				       return parseJSON((String) value).getFirst();
 				   }
-		    
+
 				   return value;
 
 			       })
-			   .toList()
-	    /*)*/;
+	    .toList();
     }
-    
-    /**
-     * Algorithm taken partially from: https://vajithc.medium.com/parsing-json-without-libraries-build-your-own-json-reader-in-java-1db8e6165039
-     */
-    /*public int lastIndexOfIgnoreQuotes(int ch, String s) {
-
-	var skip = false;
-	var index = -1;
-
-	for (var i = s.length() - 1; i >= 0; i--) {
-
-	    var curCh = s.charAt(i);
-
-	    if (curCh == '"')
-		skip = !skip;
-
-	    if (skip)
-		continue;
-	    
-	    if (curCh == ch){
-
-		index = i;
-
-		break;
-	    }
-	}
-
-	return index;
-	}*/
 
     /**
      * Algorithm taken partially from: <a href="https://vajithc.medium.com/parsing-json-without-libraries-build-your-own-json-reader-in-java-1db8e6165039">source</a>
      */
     public int indexOfIgnoreQuotes(int ch, String s) {
-	
+
 	var skip = false;
 	var index = -1;
 	var oO = 0;
@@ -209,31 +187,25 @@ public final class JSONParser {
 
 	    if (curCh == '"')
 		skip = !skip;
-	    
+
 	    if (skip)
 		continue;
 
-	    if (curCh == BEGIN_OBJECT) {
-
-		/*i = lastIndexOfIgnoreQuotes(END_OBJECT, s);*/
+	    if (curCh == BEGIN_OBJECT)
 		oO++;
-	    }
 
 	    if (curCh == END_OBJECT)
 		oO--;
 
-	    if (curCh == BEGIN_ARRAY) {
-
-		/*i = lastIndexOfIgnoreQuotes(END_ARRAY, s);*/
+	    if (curCh == BEGIN_ARRAY)
 		oA++;
-	    }
 
 	    if (curCh == END_ARRAY)
 		oA--;
 
 	    if (oO != 0 || oA != 0)
 		continue;
-	    
+
 	    if (curCh == ch){
 
 		index = i;

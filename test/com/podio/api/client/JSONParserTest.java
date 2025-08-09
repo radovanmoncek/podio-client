@@ -12,7 +12,7 @@ import org.junit.jupiter.api.*;
 public class JSONParserTest {
     private static final Logger logger = Logger.getLogger(JSONParserTest.class.getName());
     private static JSONParser jSONParser;
-
+    
     @BeforeAll
     static void setup() {
 
@@ -124,8 +124,8 @@ public class JSONParserTest {
 		if(thumbnailJSON.get("\"Url\"") instanceof String urlValue) {
 
 		    assertEquals("\"http://www.example.com/image/481989943\"", urlValue);
-		    assertEquals(125.0, thumbnailJSON.get("\"Height\""));
-		    assertEquals(100.0, thumbnailJSON.get("\"Width\""));
+		    assertEquals(125L, thumbnailJSON.get("\"Height\""));
+		    assertEquals(100L, thumbnailJSON.get("\"Width\""));
 		}
 	    }
 
@@ -135,8 +135,8 @@ public class JSONParserTest {
 
 		assertEquals(4, iDsList.size());
 		assertFalse(iDsList.isEmpty());
-		assertEquals(116, iDsList.get(0));
-		assertEquals(38793, iDsList.get(3));
+		assertEquals(116L, iDsList.get(0));
+		assertEquals(38793L, iDsList.get(3));
 	    }
 	}
     }
@@ -167,8 +167,8 @@ public class JSONParserTest {
 		if(thumbnailJSON.get("\"Url\"") instanceof String urlValue) {
 
 		    assertEquals("\"http://www.example.com/image/481989943\"", urlValue);
-		    assertEquals(125.0, thumbnailJSON.get("\"Height\""));
-		    assertEquals(100.0, thumbnailJSON.get("\"Width\""));
+		    assertEquals(125L, thumbnailJSON.get("\"Height\""));
+		    assertEquals(100L, thumbnailJSON.get("\"Width\""));
 		}
 	    }
 
@@ -178,8 +178,8 @@ public class JSONParserTest {
 
 		assertEquals(7, iDsList.size());
 		assertFalse(iDsList.isEmpty());
-		assertEquals(116, iDsList.get(0));
-		assertEquals(38793, iDsList.get(6));
+		assertEquals(116L, iDsList.get(0));
+		assertEquals(38793L, iDsList.get(6));
 	    }
 	}
     }
@@ -190,6 +190,8 @@ public class JSONParserTest {
 	final var result = jSONParser
 	    .parseJSONArray("[{\"precision\": \"zip\",\"Latitude\": 37.7668, \"Longitude\": -122.3959, \"Address\": \"\", \"City\": \"SAN FRANCISCO\", \"State\": \"CA\", \"Zip\": \"94107\", \"Country\": \"US\"}, {\"precision\": \"zip\", \"Latitude\": 37.371991, \"Longitude\": -122.026020, \"Address\": \"\", \"City\": \"SUNNYVALE\", \"State\": \"CA\", \"Zip\": \"94085\", \"Country\": \"US\"}]");
 
+	logger.info(result.toString());
+
 	assertFalse(result.isEmpty());
 
 	assertEquals(2, result.size());
@@ -197,10 +199,12 @@ public class JSONParserTest {
 	assertTrue(result.get(0) instanceof HashMap);
 
 	assertEquals(37.7668, ((HashMap) result.get(0)).get("\"Latitude\""));
+	assertEquals(-122.3959, ((HashMap) result.get(0)).get("\"Longitude\""));
 	assertEquals("\"SAN FRANCISCO\"", ((HashMap) result.get(0)).get("\"City\""));
 
 	assertTrue(result.get(1) instanceof HashMap);
 
 	assertEquals(37.371991, ((HashMap) result.get(1)).get("\"Latitude\""));
+	assertEquals(-122.026020, ((HashMap) result.get(1)).get("\"Longitude\""));
     }
 }

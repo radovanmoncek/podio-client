@@ -15,16 +15,15 @@ import java.util.logging.Logger;
  * This class serves as a wrapper for the Podio API HTTPS client requests.
  */
 public final class PodioClient implements AutoCloseable {
-    private static final Logger logger = Logger.getLogger(PodioClient.class.getName());
-    public static final String PODIO_API_BASE_URI = "https://api.podio.com/";
-    public static final String OAUTH_URI = PODIO_API_BASE_URI + "oauth/token/v2";
-    public static final String APP_ENDPOINT = PODIO_API_BASE_URI + "app/";
-    public static final String ITEM_ENDPOINT = PODIO_API_BASE_URI + "item/";
-    public static final String ORG_ENDPOINT = PODIO_API_BASE_URI + "org/";
-    public static final String SPACE_ENDPOINT = PODIO_API_BASE_URI + "space/";
-    public static final String USER_ENDPOINT = PODIO_API_BASE_URI + "user/";
-    public static final String REFERENCE_ENDPOINT = PODIO_API_BASE_URI + "reference/";
-    private static PodioClient instance;
+    public final String PODIO_API_BASE_URI = "https://api.podio.com/";
+    public final String OAUTH_URI = PODIO_API_BASE_URI + "oauth/token/v2";
+    public final String APP_ENDPOINT = PODIO_API_BASE_URI + "app/";
+    public final String ITEM_ENDPOINT = PODIO_API_BASE_URI + "item/";
+    public final String ORG_ENDPOINT = PODIO_API_BASE_URI + "org/";
+    public final String SPACE_ENDPOINT = PODIO_API_BASE_URI + "space/";
+    public final String USER_ENDPOINT = PODIO_API_BASE_URI + "user/";
+    public final String REFERENCE_ENDPOINT = PODIO_API_BASE_URI + "reference/";
+    private final Logger logger;
     private final JSONParser jSONParser;
     private final HttpClient httpClient;
     private final Timer tokenRefreshTimer;
@@ -32,16 +31,12 @@ public final class PodioClient implements AutoCloseable {
     private Map<String, Object> authenticationResponseBody;
     private TimerTask tokenRefreshTask;
 
-    private PodioClient() {
+    public PodioClient() {
 
+	logger = Logger.getLogger(getClass().getName());
 	jSONParser = new JSONParser();
 	httpClient = HttpClient.newHttpClient();
 	tokenRefreshTimer = new Timer();
-    }
-
-    public static PodioClient returnInstance() {
-
-	return Objects.requireNonNullElse(instance, instance = new PodioClient());
     }
 
     public void login(final Map<String, String> creds) throws Exception {
@@ -170,19 +165,19 @@ public final class PodioClient implements AutoCloseable {
 		},
 		(int) ((Double) authenticationResponseBody.get("\"expires_in\"") * 1000)
 		);
-        } catch (URISyntaxException | IOException | InterruptedException e) {
+	} catch (URISyntaxException | IOException | InterruptedException e) {
 
 	    logger.throwing(getClass().getName(), "login", e);
-        }
+	}
     }
 
     public List<Object> sendGET(final String endpoint) {
 
-        try {
+	try {
 
-            logger.log(Level.INFO, "{0} GET", endpoint);
+	    logger.log(Level.INFO, "{0} GET", endpoint);
 
-            final var httpResponse = httpClient
+	    final var httpResponse = httpClient
 		.send(
 		      HttpRequest
 		      .newBuilder()
@@ -195,35 +190,35 @@ public final class PodioClient implements AutoCloseable {
 		      .ofString()
 		      );
 
-            logger.log(Level.FINEST, "Current call count: {0}", ++callCount);
+	    logger.log(Level.FINEST, "Current call count: {0}", ++callCount);
 
-            if (httpResponse.statusCode() >= 400) {
+	    if (httpResponse.statusCode() >= 400) {
 
-                logger.log(Level.SEVERE, "Response code above 400 {0}", httpResponse);
-                logger.severe(httpResponse.body());
+		logger.log(Level.SEVERE, "Response code above 400 {0}", httpResponse);
+		logger.severe(httpResponse.body());
 
-                if (httpResponse.statusCode() == 420)
-                    logger.severe("Rate limit reached");
+		if (httpResponse.statusCode() == 420)
+		    logger.severe("Rate limit reached");
 
-                return List.of();
-            }
+		return List.of();
+	    }
 
 	    logger.info(httpResponse.body());
-	    
-            TimeUnit.MILLISECONDS.sleep(500);
 
-            final var res = jSONParser.parseJSON(httpResponse.body());
+	    TimeUnit.MILLISECONDS.sleep(500);
+
+	    final var res = jSONParser.parseJSON(httpResponse.body());
 
 	    if (!res.isEmpty())
 		return res;
 
 	    return jSONParser.parseJSONArray(httpResponse.body());
-        } catch (IOException | InterruptedException | URISyntaxException e) {
+	} catch (IOException | InterruptedException | URISyntaxException e) {
 
 	    logger.throwing(getClass().getName(), "GET", e);
 
-            return List.of();
-        }
+	    return List.of();
+	}
     }
 
     public List<Object> sendPOST(final String endpoint, final String body) {
@@ -232,7 +227,7 @@ public final class PodioClient implements AutoCloseable {
 
 	    logger.log(Level.INFO, "{0} POST", endpoint);
 
-            final var httpResponse = httpClient.send(HttpRequest
+	    final var httpResponse = httpClient.send(HttpRequest
 						     .newBuilder()
 						     .uri(URI.create(endpoint))
 						     .header("Authorization", "OAuth2 " + authenticationResponseBody.get("\"access_token\""))
@@ -247,31 +242,31 @@ public final class PodioClient implements AutoCloseable {
 						     .ofString()
 						     );
 
-            logger.log(Level.FINEST, "Current call count: {0}", ++callCount);
+	    logger.log(Level.FINEST, "Current call count: {0}", ++callCount);
 
-            if (httpResponse.statusCode() >= 400) {
-                logger.log(Level.FINEST, "Response code above 400 {0}", httpResponse);
+	    if (httpResponse.statusCode() >= 400) {
+		logger.log(Level.FINEST, "Response code above 400 {0}", httpResponse);
 
-                if (httpResponse.statusCode() == 420)
-                    logger.severe("Rate limit reached");
+		if (httpResponse.statusCode() == 420)
+		    logger.severe("Rate limit reached");
 
-                return List.of();
-            }
+		return List.of();
+	    }
 
-            TimeUnit.MILLISECONDS.sleep(500);
+	    TimeUnit.MILLISECONDS.sleep(500);
 
-            final var res = jSONParser.parseJSON(httpResponse.body());
+	    final var res = jSONParser.parseJSON(httpResponse.body());
 
 	    if (!res.isEmpty())
 		return res;
 
 	    return jSONParser.parseJSONArray(httpResponse.body());
-        } catch (IOException | InterruptedException e) {
+	} catch (IOException | InterruptedException e) {
 
-            logger.throwing(getClass().getName(), "POST", e);
+	    logger.throwing(getClass().getName(), "POST", e);
 
-            return List.of();
-        }
+	    return List.of();
+	}
     }
 
     @Override
