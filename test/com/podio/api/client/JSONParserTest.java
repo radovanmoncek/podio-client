@@ -147,7 +147,7 @@ public class JSONParserTest {
     @Test
     void rFCSpecificationParseTestImproved() {
 	
-	final var result = jSONParser.parseJSON("{\"empty_array\":[], \"Image\": {\"Width\": 800, \"Height\": 600, \"null_value\":null, \"Title\": \"View from 15th Floor\", \"Thumbnail\": {\"Url\": \"http://www.example.com/image/481989943\", \"Height\": 125, \"null_value_in_object\":null, \"Width\": 100}, \"another_empty_array\":[], \"Animated\" : false, \"IDs\": [116, {\"empty_array\":[], \"null_value\":null}, 943, 234, null, [null, \"person@example.com\"], 38793]}}");
+	final var result = jSONParser.parseJSON("{\"empty_array\":[], \"Image\": {\"Width\": 800, \"Height\": 600, \"null_value\":null, \"Title\": \"View from 15th Floor\", \"Thumbnail\": {\"Url\": \"http://www.example.com/image/481989943\", \"Height\": 125, \"null_value_in_object\":null, \"Width\": 100}, \"another_empty_array\":[], \"Animated\" : false, \"IDs\": [{\"test\":101, \"ugly\":\"{[]}\\\"ug\\\"l\\\"[]y_[]{}test\", \"another\":[1, 42, {\"array\":[]}]}, 116, {\"empty_array\":[], \"null_value\":null}, 943, 234, null, [null, \"person@example.com\"], 38793]}}");
 
 	assertFalse(result.isEmpty());
 
@@ -176,10 +176,10 @@ public class JSONParserTest {
 	    
 	    if (imageJSON.get("\"IDs\"") instanceof List iDsList) {
 
-		assertEquals(7, iDsList.size());
+		assertEquals(8, iDsList.size());
 		assertFalse(iDsList.isEmpty());
-		assertEquals(116L, iDsList.get(0));
-		assertEquals(38793L, iDsList.get(6));
+		assertEquals(116L, iDsList.get(1));
+		assertEquals(38793L, iDsList.get(7));
 	    }
 	}
     }

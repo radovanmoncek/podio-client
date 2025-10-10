@@ -6,7 +6,7 @@
 
     <groupId>cz.eduzmena</groupId>
     <artifactId>podio_client</artifactId>
-    <version>0.13</version>
+    <version>0.22</version>
     <name>podio_client</name>
     <build>
       <sourceDirectory>main</sourceDirectory>

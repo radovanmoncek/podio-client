@@ -25,70 +25,90 @@ public final class JSONParser {
 
     List<Object> parseJSON(String jSONString) {
 
-	final HashMap<String, Object> parsedJSON = new HashMap<>();
+	try {
 
-	if (jSONString.charAt(0) != BEGIN_OBJECT || jSONString.charAt(jSONString.length() - 1) != END_OBJECT)
-	    return List.of();
+	    final HashMap<String, Object> parsedJSON = new HashMap<>();
 
-	if (jSONString.equals("{}"))
-	    return List.of(parsedJSON);
+	    if (jSONString.charAt(0) != BEGIN_OBJECT || jSONString.charAt(jSONString.length() - 1) != END_OBJECT)
+		return List.of();
 
-	jSONString = jSONString.substring(1, jSONString.length() - 1);
+	    if (jSONString.equals("{}"))
+		return List.of(parsedJSON);
 
-	if (jSONString.charAt(jSONString.length() - 1) != VALUE_SEPARATOR.charValue())
-	    jSONString = jSONString.concat(VALUE_SEPARATOR.toString());
+	    jSONString = jSONString.substring(1, jSONString.length() - 1);
 
-	var inQuotes = false;
-	var lastValueSeparator = -1;
+	    if (jSONString.charAt(jSONString.length() - 1) != VALUE_SEPARATOR.charValue())
+		jSONString = jSONString.concat(VALUE_SEPARATOR.toString());
 
-	for (var i = 0; i < jSONString.length(); i++) {
+	    var inQuotes = false;
+	    var lastValueSeparator = -1;
 
-	    if(jSONString.charAt(i) == '"')
-	 	inQuotes = !inQuotes;
+	    for (var i = 0; i < jSONString.length(); i++) {
 
-	    if (inQuotes)
-		continue;
+		if(jSONString.charAt(i) == '"') {
+		    if (i > 0 && jSONString.charAt(i - 1) == '\\')
+			continue;
 
-	    if (jSONString.charAt(i) == NAME_SEPARATOR) {
-
-		final var key = jSONString.substring(lastValueSeparator + 1, i);
-		final var value = jSONString.substring(i + 1, lastValueSeparator = indexOfIgnoreQuotes(VALUE_SEPARATOR, jSONString.substring(i + 1, jSONString.length())) + i + 1);
-
-		i = lastValueSeparator;
-
-		parsedJSON.put(key.trim(), value.trim());
-	    }
-	}
-
-	parsedJSON.forEach((key, value) -> {
-
-		if (value instanceof String stringValue) {
-
-		    final var firstCh = stringValue.charAt(0);
-
-		    if(firstCh == BEGIN_ARRAY)
-			parsedJSON.replace(key, parseJSONArray(stringValue));
-
-		    if (firstCh == BEGIN_OBJECT)
-			parsedJSON.replace(key, parseJSON(stringValue).getFirst());
-
-		    try {
-
-			parsedJSON.replace(key, Long.parseLong(stringValue));
-
-			return;
-		    }
-		    catch (final Exception ignored) {}
-
-		    try {
-
-			parsedJSON.replace(key, Double.parseDouble(stringValue));
-		    }
-		    catch (final Exception ignored) {}
+		    inQuotes = !inQuotes;
 		}
-	    });
 
-	return List.of(parsedJSON);
+		if (inQuotes)
+		    continue;
+
+		if (jSONString.charAt(i) == NAME_SEPARATOR) {
+
+		    try {
+			final var key = jSONString.substring(lastValueSeparator + 1, i);
+			final var value = jSONString.substring(i + 1, lastValueSeparator = indexOfIgnoreQuotes(VALUE_SEPARATOR, jSONString.substring(i + 1, jSONString.length())) + i + 1);
+
+			i = lastValueSeparator;
+
+			parsedJSON.put(key.trim(), value.trim());
+		    }
+		    catch(final Exception e) {
+
+			logger.throwing(getClass().getName(), "parseJSON", e);
+			logger.throwing(getClass().getName(), "parseJSON", new Exception(jSONString.substring(i, Math.min(jSONString.length(), 10 + i))));
+		    }
+		}
+	    }
+
+	    parsedJSON.forEach((key, value) -> {
+
+		    if (value instanceof String stringValue) {
+
+			final var firstCh = stringValue.charAt(0);
+
+			if(firstCh == BEGIN_ARRAY)
+			    parsedJSON.replace(key, parseJSONArray(stringValue));
+
+			if (firstCh == BEGIN_OBJECT)
+			    parsedJSON.replace(key, parseJSON(stringValue).getFirst());
+
+			try {
+
+			    parsedJSON.replace(key, Long.parseLong(stringValue));
+
+			    return;
+			}
+			catch (final Exception ignored) {}
+
+			try {
+
+			    parsedJSON.replace(key, Double.parseDouble(stringValue));
+			}
+			catch (final Exception ignored) {}
+		    }
+		});
+
+	    return List.of(parsedJSON);
+	}
+	catch (final Exception e) {
+
+	    logger.throwing(getClass().getName(), "parseJSON", e);
+
+	    return List.of();
+	}
     }
 
     /**
@@ -118,8 +138,12 @@ public final class JSONParser {
 
 	    final var curCh = jSONString.charAt(i);
 
-	    if (curCh == '"')
+	    if (curCh == '"') {
+		if (i > 0 && jSONString.charAt(i - 1) == '\\')
+		    continue;
+
 		skip = !skip;
+	    }
 
 	    if (curCh == BEGIN_OBJECT)
 		objectConsumerCount++;
@@ -145,29 +169,29 @@ public final class JSONParser {
 	}
 
 	return parsedJSON
-			   .stream()
-			   .map(value -> {
+	    .stream()
+	    .map(value -> {
 
-				   try {
+		    try {
 
-				       return Long.parseLong((String) value);
-				   }
-				   catch (Exception ignored) {}
+			return Long.parseLong((String) value);
+		    }
+		    catch (Exception ignored) {}
 
-				   try {
+		    try {
 
-				       return Double.parseDouble((String) value);
-				   }
-				   catch (Exception ignored) {}
+			return Double.parseDouble((String) value);
+		    }
+		    catch (Exception ignored) {}
 
-				   if (((String) value).charAt(0) == BEGIN_OBJECT) {
+		    if (((String) value).charAt(0) == BEGIN_OBJECT) {
 
-				       return parseJSON((String) value).getFirst();
-				   }
+			return parseJSON((String) value).getFirst();
+		    }
 
-				   return value;
+		    return value;
 
-			       })
+		})
 	    .toList();
     }
 
@@ -185,8 +209,12 @@ public final class JSONParser {
 
 	    var curCh = s.charAt(i);
 
-	    if (curCh == '"')
+	    if (curCh == '"') {
+		if(i > 0 && s.charAt(i - 1) == '\\')
+		    continue;
+
 		skip = !skip;
+	    }
 
 	    if (skip)
 		continue;
