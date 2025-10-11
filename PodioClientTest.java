@@ -1,4 +1,4 @@
-package com.podio.api.client;
+//package com.podio.api.client;
 
 import org.junit.jupiter.api.*;
 import static org.junit.jupiter.api.Assertions.*;
@@ -11,7 +11,6 @@ public class PodioClientTest {
 
     @BeforeAll
     static void setup(){
-
 	final var log = Logger.getLogger(PodioClient.class.getName());
 
 	log.setLevel(Level.ALL);
