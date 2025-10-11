@@ -1,5 +1,3 @@
-//package com.podio.api.client;
-
 import org.junit.jupiter.api.*;
 import static org.junit.jupiter.api.Assertions.*;
 
