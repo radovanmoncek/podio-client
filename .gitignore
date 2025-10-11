@@ -57,3 +57,9 @@ log4j2.xml
 *.json
 
 *.iml
+
+#ignore folder
+ignore
+
+#temp files
+*~
