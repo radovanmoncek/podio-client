@@ -1,4 +1,4 @@
-package java;
+package podio;
 
 import java.io.IOException;
 import java.net.URI;
