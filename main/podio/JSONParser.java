@@ -23,10 +23,8 @@ public final class JSONParser {
     private final Character NAME_SEPARATOR = ':';
     private final Character VALUE_SEPARATOR = ',';
 
-    List<Object> parseJSON(String jSONString) {
-
+    public List<Object> parseJSON(String jSONString) {
 	try {
-
 	    final HashMap<String, Object> parsedJSON = new HashMap<>();
 
 	    if (jSONString.charAt(0) != BEGIN_OBJECT || jSONString.charAt(jSONString.length() - 1) != END_OBJECT)
@@ -114,8 +112,7 @@ public final class JSONParser {
     /**
      * Algorithm taken partially from: https://vajithc.medium.com/parsing-json-without-libraries-build-your-own-json-reader-in-java-1db8e6165039
      */
-    List<Object> parseJSONArray(String jSONString) {
-
+    public List<Object> parseJSONArray(String jSONString) {
 	final var parsedJSON = new LinkedList<Object>();
 
 	if (jSONString.charAt(0) != BEGIN_ARRAY || jSONString.charAt(jSONString.length() - 1) != END_ARRAY)

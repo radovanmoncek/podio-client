@@ -14,7 +14,7 @@ import java.util.logging.Logger;
 /**
  * This class serves as a wrapper for the Podio API HTTPS client requests.
  */
-public final class PodioClient implements AutoCloseable {
+public class PodioClient implements AutoCloseable {
     public final String PODIO_API_BASE_URI = "https://api.podio.com/";
     public final String OAUTH_URI = PODIO_API_BASE_URI + "oauth/token/v2";
     public final String APP_ENDPOINT = PODIO_API_BASE_URI + "app/";
@@ -279,7 +279,6 @@ public final class PodioClient implements AutoCloseable {
 
     @Override
     public void close() {
-
 	httpClient.close();
 
 	if(tokenRefreshTask == null)
@@ -290,7 +289,6 @@ public final class PodioClient implements AutoCloseable {
     }
 
     private String trimQuotes(final String s) {
-
 	return s.substring(1, s.length() - 1);
     }
 }
