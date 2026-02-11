@@ -74,3 +74,9 @@ https://www.baeldung.com/java-lang-unsupportedclassversion
 https://hatchjs.com/java-lang-module-invalidmoduledescriptorexception/
 https://blog.csdn.net/wangiyeng/article/details/130627629 (careful, Chinese spyware)
 https://www.baeldung.com/java-modularity
+
+#### Node.js import
+
+`Possible`
+
+- https://masteringjs.io/tutorials/node/import
